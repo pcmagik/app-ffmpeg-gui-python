@@ -4,201 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FFmpeg GUI</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        .upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 20px;
-            background-color: #fff;
-            cursor: pointer;
-            margin-bottom: 20px;
-            width: 50%;
-            text-align: center;
-        }
-        .upload-area.dragover {
-            border-color: #333;
-        }
-        #progress-bar {
-            width: 50%;
-            height: 20px;
-            background-color: #ccc;
-            margin-bottom: 20px;
-            display: none;
-        }
-        #progress-bar .progress {
-            height: 100%;
-            width: 0;
-            background-color: #4caf50;
-        }
-        .hidden {
-            display: none;
-        }
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #4caf50;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .download-link {
-            text-decoration: none;
-            color: #4caf50;
-            font-weight: bold;
-        }
-        .download-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>FFmpeg GUI</h1>
-    <div id="upload-area" class="upload-area" onclick="document.getElementById('file-input').click()">
-        Drag and drop a file here or click to select
-    </div>
-    <input id="file-input" type="file" class="hidden">
-    <div class="button-container">
-        <select id="operation">
-            <option value="convert">Convert to MP4</option>
-            <option value="gif">Create GIF</option>
-        </select>
-        <button onclick="handleSubmit()">Submit</button>
-    </div>
-    <div id="gif-options" class="hidden">
-        <label for="resolution">Resolution:</label>
-        <select id="resolution" onchange="toggleCustomResolution(this.value)">
-            <option value="320:-1">320xAuto</option>
-            <option value="480:-1">480xAuto</option>
-            <option value="640:-1">640xAuto</option>
-            <option value="custom">Custom</option>
-        </select>
-        <div id="custom-resolution" class="hidden">
-            <label for="custom-width">Width:</label>
-            <input type="text" id="custom-width" placeholder="Width">
-            <label for="custom-height">Height:</label>
-            <input type="text" id="custom-height" placeholder="Height">
+    <div class="container">
+        <div class="header">
+            <img src="/static/logo.png" alt="FFmpeg GUI Logo" class="logo">
+            <h1 class="title">FFmpeg GUI</h1>
         </div>
-        <label for="fps">FPS:</label>
-        <input type="number" id="fps" value="10">
+        <form action="/execute" method="POST" enctype="multipart/form-data" class="form">
+            <input type="file" name="file" class="file-input" required>
+            <select name="resolution" class="select-input">
+                <option value="320xAuto">320xAuto</option>
+                <option value="480xAuto">480xAuto</option>
+                <option value="720xAuto">720xAuto</option>
+                <option value="1080xAuto">1080xAuto</option>
+            </select>
+            <input type="text" name="custom_resolution" placeholder="Enter custom resolution e.g., 640x480" class="text-input">
+            <input type="number" name="fps" value="10" class="number-input" required>
+            <button type="submit" class="button">Submit</button>
+        </form>
+        {% if file_processed %}
+        <p class="status-message">File processed successfully</p>
+        <a href="{{ url_for('download', filename=output_filename) }}" class="download-link">Download Output File</a>
+        {% endif %}
     </div>
-    <div id="progress-bar">
-        <div class="progress"></div>
-    </div>
-    <p id="message"></p>
-    <a id="download-link" class="download-link hidden" href="#" download>Download Output File</a>
-    <script>
-        const fileInput = document.getElementById('file-input');
-        const uploadArea = document.getElementById('upload-area');
-        const gifOptions = document.getElementById('gif-options');
-        const operationSelect = document.getElementById('operation');
-        const progressBar = document.getElementById('progress-bar');
-        const progress = document.querySelector('.progress');
-        const message = document.getElementById('message');
-        const downloadLink = document.getElementById('download-link');
-        const resolutionSelect = document.getElementById('resolution');
-        const customResolution = document.getElementById('custom-resolution');
-
-        operationSelect.addEventListener('change', function() {
-            if (this.value === 'gif') {
-                gifOptions.classList.remove('hidden');
-            } else {
-                gifOptions.classList.add('hidden');
-            }
-        });
-
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', function(e) {
-            this.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            fileInput.files = e.dataTransfer.files;
-        });
-
-        function toggleCustomResolution(value) {
-            if (value === 'custom') {
-                customResolution.classList.remove('hidden');
-            } else {
-                customResolution.classList.add('hidden');
-            }
-        }
-
-        function handleSubmit() {
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file.');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('operation', operationSelect.value);
-
-            if (operationSelect.value === 'gif') {
-                const resolution = resolutionSelect.value === 'custom' 
-                    ? `${document.getElementById('custom-width').value}:${document.getElementById('custom-height').value}` 
-                    : resolutionSelect.value;
-                const fps = document.getElementById('fps').value;
-                formData.append('resolution', resolution);
-                formData.append('fps', fps);
-            }
-
-            progressBar.style.display = 'block';
-            progress.style.width = '0%';
-
-            fetch('/execute', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    message.textContent = 'File processed successfully';
-                    downloadLink.href = `/download/${data.filename}`;
-                    downloadLink.classList.remove('hidden');
-                    progress.style.width = '100%';
-                    setTimeout(() => {
-                        progressBar.style.display = 'none';
-                    }, 1000);
-                } else {
-                    message.textContent = 'Error processing file';
-                    progressBar.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                message.textContent = 'Error processing file';
-                progressBar.style.display = 'none';
-            });
-        }
-    </script>
 </body>
 </html>

@@ -18,7 +18,7 @@ fi
 docker build -t ${IMAGE_NAME} .
 
 # Uruchom nowy kontener
-docker run --name ${CONTAINER_NAME} -p 8080:8080 -v ~/ffmpeg-gui/uploads:/app/uploads -v ~/ffmpeg-gui/temp:/app/temp ${IMAGE_NAME}
+docker run --name ${CONTAINER_NAME} -p 8080:8080 -v $(pwd)/uploads:/app/uploads -v $(pwd)/temp:/app/temp -v $(pwd)/gifs:/app/gifs ${IMAGE_NAME}
 
 # Usuń stary, nieużywany obraz
 docker image prune -f
