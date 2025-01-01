@@ -6,6 +6,9 @@ RUN apk add --no-cache ffmpeg
 # Set working directory
 WORKDIR /app
 
+# Create required directories
+RUN mkdir -p /app/uploads /app/temp/GIFY /app/gifs
+
 # Copy current directory contents to /app
 COPY . /app
 

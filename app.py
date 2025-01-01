@@ -67,4 +67,9 @@ def download(filename):
     return send_from_directory(app.config['GIF_FOLDER'], filename)
 
 if __name__ == "__main__":
+    # Upewnij się, że wszystkie wymagane katalogi istnieją
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(TEMP_FOLDER, exist_ok=True)
+    os.makedirs(GIF_FOLDER, exist_ok=True)
+    
     app.run(host='0.0.0.0', port=8080)

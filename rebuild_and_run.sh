@@ -18,7 +18,12 @@ fi
 docker build -t ${IMAGE_NAME} .
 
 # Uruchom nowy kontener
-docker run --name ${CONTAINER_NAME} -p 8080:8080 -v $(pwd)/uploads:/app/uploads -v $(pwd)/temp:/app/temp -v $(pwd)/gifs:/app/gifs ${IMAGE_NAME}
+docker run --name ${CONTAINER_NAME} \
+    -p 8181:8080 \
+    -v $(pwd)/uploads:/app/uploads \
+    -v $(pwd)/temp:/app/temp \
+    -v $(pwd)/gifs:/app/gifs \
+    ${IMAGE_NAME}
 
 # Usuń stary, nieużywany obraz
 docker image prune -f
